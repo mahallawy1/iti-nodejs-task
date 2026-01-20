@@ -1,29 +1,38 @@
+require('dotenv').config();
+
 const express = require('express');
 const mongoose = require('mongoose');
-const postRoutes = require('./routes/postroute');
+const cors = require('cors');
+const postRouter = require('./routers/posts');
+const studentRouter = require('./routers/students');
+const errorHandler = require('./middlewares/errorHandler');
 
-const app = express();  
+const app = express();
 
-// Middleware to parse JSON body
+// Middleware
 app.use(express.json());
+app.use(cors());
 
-// Register routes
-app.use('/posts', postRoutes);
+// Routers
+app.use('/posts', postRouter);
+app.use('/students', studentRouter);
 
-// Your MongoDB URI
-const MONGODB_URI = 'mongodb+srv://abdo:wN4aPxwBtuBdEomS@abdo.wdvxc.mongodb.net/?appName=abdo';
+// Global Error Handler (MUST be last)
+app.use(errorHandler);
 
-const PORT = 3000;
+// Server setup
+const PORT = Number(process.env.PORT) || 3000;
+const MONGO_URI = process.env.MONGO_URI;
+const DB_NAME = process.env.DB_NAME;
 
-// Connect to MongoDB
-mongoose.connect(MONGODB_URI)
-  .then(() => {
-    console.log('Connected to MongoDB');
-    
-    app.listen(PORT, () => {
-      console.log(`Server running at http://localhost:${PORT}`);
+mongoose.connect(`${MONGO_URI}/${DB_NAME}`)
+    .then(() => {
+        console.log('✅✅ Connected to MongoDB');
+        app.listen(PORT, () => {
+            console.log(`✅✅ Server is running on Port: ${PORT}`);
+        });
+    })
+    .catch((err) => {
+        console.log('❌❌ Failed to connect to MongoDB');
+        console.log(err);
     });
-  })
-  .catch((err) => {
-    console.error('MongoDB connection error:', err);
-  });
