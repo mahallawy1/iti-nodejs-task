@@ -1,7 +1,6 @@
 const APIError = require('../utils/APIError');
 
 const errorHandler = (err, req, res, next) => {
-    // Handle APIError instances
     if (err instanceof APIError) {
         return res.status(err.statusCode).json({
             message: err.message,
@@ -10,7 +9,6 @@ const errorHandler = (err, req, res, next) => {
         });
     }
 
-    // Handle MongoDB CastError (invalid ObjectId)
     if (err.name === 'CastError') {
         return res.status(400).json({
             message: `Invalid ${err.path}: ${err.value}`,
@@ -19,7 +17,6 @@ const errorHandler = (err, req, res, next) => {
         });
     }
 
-    // Handle MongoDB duplicate key error
     if (err.name === 'MongoServerError' && err.code === 11000) {
         const field = Object.keys(err.keyValue)[0];
         return res.status(400).json({
@@ -29,7 +26,6 @@ const errorHandler = (err, req, res, next) => {
         });
     }
 
-    // Handle Mongoose validation errors
     if (err.name === 'ValidationError') {
         const messages = Object.values(err.errors).map(e => e.message);
         return res.status(400).json({
@@ -39,7 +35,6 @@ const errorHandler = (err, req, res, next) => {
         });
     }
 
-    // Handle unexpected errors
     console.error('Unexpected Error:', err);
     return res.status(500).json({
         message: 'Internal Server Error',

@@ -1,43 +1,65 @@
 const Post = require('../models/posts');
+const APIError = require('../utils/APIError');
 
-const createPost = async (postData) => {
-    const post = new Post(postData);
-    return await post.save();
+const createPost = async (data, userId) => {
+  return Post.create({
+    ...data,
+    userId
+  });
 };
 
-const getAllPosts = async (query) => {
-    const page = parseInt(query.page) || 1;
-    const limit = parseInt(query.limit) || 10;
-    const skip = (page - 1) * limit;
-
-    const posts = await Post.find().skip(skip).limit(limit);
-    const total = await Post.countDocuments();
-
-    return {
-        posts,
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit)
-    };
+const getAllPosts = async (userId) => {
+  const posts = await Post.find().populate('userId', 'name email');
+  
+  return posts.map(post => {
+    const postObj = post.toObject();
+    // Compare the populated userId._id with the authenticated userId
+    postObj.isOwner = post.userId._id.toString() === userId;
+    return postObj;
+  });
 };
 
-const getPostById = async (id) => {
-    return await Post.findById(id);
+const getPostById = async (id, userId) => {
+  const post = await Post.findById(id).populate('userId', 'name email');
+  if (!post) return null;
+  
+  const postObj = post.toObject();
+  // Compare the populated userId._id with the authenticated userId
+  postObj.isOwner = post.userId._id.toString() === userId;
+  return postObj;
 };
 
-const updatePostById = async (id, postData) => {
-    return await Post.findByIdAndUpdate(id, postData, { new: true });
+const updatePostById = async (id, data, userId) => {
+  const post = await Post.findById(id);
+  if (!post) return null;
+  
+  // Check ownership - compare userId field directly (not populated here)
+  if (post.userId.toString() !== userId) {
+    throw new APIError('You are not authorized to update this post', 403);
+  }
+  
+  return await Post.findByIdAndUpdate(id, data, { 
+    new: true, 
+    runValidators: true 
+  });
 };
 
-const deletePostById = async (id) => {
-    return await Post.findByIdAndDelete(id);
+const deletePostById = async (id, userId) => {
+  const post = await Post.findById(id);
+  if (!post) return null;
+  
+  // Check ownership - compare userId field directly (not populated here)
+  if (post.userId.toString() !== userId) {
+    throw new APIError('You are not authorized to delete this post', 403);
+  }
+  
+  return await Post.findByIdAndDelete(id);
 };
 
 module.exports = {
-    createPost,
-    getAllPosts,
-    getPostById,
-    updatePostById,
-    deletePostById
+  createPost,
+  getAllPosts,
+  getPostById,
+  updatePostById,
+  deletePostById
 };
