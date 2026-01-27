@@ -6,7 +6,6 @@ const validate = require('../middlewares/validate');
 const authenticate = require('../middlewares/auth');
 const { createPostSchema, getAllPostsSchema, updatePostSchema } = require('../schemas/posts');
 
-// All post routes require authentication
 router.post('/', authenticate, validate(createPostSchema), postsController.createPost);
 router.get('/', authenticate, validate(getAllPostsSchema), postsController.getAllPosts);
 router.get('/:id', authenticate, postsController.getPostById);

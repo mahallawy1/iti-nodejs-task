@@ -14,7 +14,10 @@ const getAllPosts = async (userId) => {
   return posts.map(post => {
     const postObj = post.toObject();
     // Compare the populated userId._id with the authenticated userId
-    postObj.isOwner = post.userId._id.toString() === userId;
+    postObj.isOwner = post.userId._id.toString() == userId;
+    console.log("////////////////////////////")
+    console.log(userId)
+    console.log(post.userId._id.toString())
     return postObj;
   });
 };

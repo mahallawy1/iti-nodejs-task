@@ -7,14 +7,32 @@ const postRouter = require('./routers/posts');
 const studentRouter = require('./routers/students');
 const errorHandler = require('./middlewares/errorHandler');
 const userRouter = require('./routers/user');
+const donationRouter = require('./routers/donation');
 const app = express();
 
+
+const helmet = require("helmet");
+const { sanitizeMongoInput } = require("express-v5-mongo-sanitize");
+const { xss } = require('express-xss-sanitizer');
+const hpp = require('hpp');
+require('dotenv').config();
+
+const rateLimiter = require('./middlewares/rateLimiter.js');
 app.use(express.json());
-app.use(cors());
- 
+ app.set('trust proxy', 1);
+app.use(cors()); // to allow the request from the client
+app.use(helmet());
+app.use(sanitizeMongoInput);
+app.use(xss());
+app.use(hpp());
+app.use(rateLimiter);
+
+
 app.use('/posts', postRouter);
 app.use('/students', studentRouter);
 app.use('/users', userRouter);
+app.use('/donations', donationRouter);
+
 app.use(errorHandler);
 
 const PORT = Number(process.env.PORT) || 3000;
